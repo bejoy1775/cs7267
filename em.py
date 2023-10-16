@@ -1,4 +1,5 @@
 # Importing the necessary libraries
+# add a test here
 import numpy as np
 from scipy.stats import multivariate_normal
 import matplotlib.pyplot as plt
@@ -38,6 +39,11 @@ pi = np.ones(n_clusters) / n_clusters
 def prob(data, mu, cov, pi):
     n_clusters = len(pi)
     prob = np.zeros((n_clusters, len(data)))
+    # For each of the two clusters, we are calculating the probability values as explained in slide 44
+    # equation and slide 45 equation 1. This is in two dimension equivalent of 1 dimension e.g. shown in slide 43
+    # first equation.
+    # We are using scipy.stats multivariate_normal.pdf that takes the data(in 2D), mean and covariance
+    # of the given gaussian density distribution to calculate the probability.
     for i in range(n_clusters):
         prob[i] = pi[i] * multivariate_normal.pdf(data, mu[i], cov[i])
     return prob
@@ -52,6 +58,7 @@ def EM(data, mu, cov, pi):
     # Iterating till convergence
     for i in range(1000):
         # Calculating the probabilities
+        # The details are explained in the comments for the function above.
         probabilities = prob(data, mu, cov, pi)
 
         # Calculating the log-likelihood
@@ -60,14 +67,25 @@ def EM(data, mu, cov, pi):
         log_likelihoods.append(log_likelihood)
 
         # Calculating the Expectation Step
+        # This is implementation of equation 2 in slide 43 (1D e.g) and equation 2 in slide 45 (since this is 2d)
         weights = probabilities / np.sum(probabilities, axis=0)
 
         # Calculating the Maximization Step
+        # This is implementation of line 4 and line 6 from slide 43. We are calculating the adjusted mean based on
+        # the probabilities calculated from previous step.
         mu = np.dot(weights, data) / np.sum(weights, axis=1).reshape(-1, 1)
+
+        # We are initializing the cov 2 d array with zeroes.
+
         cov = np.zeros((n_clusters, 2, 2))
+        # This is implementation of line 5 and line 7 from slide 43. We are calculating the adjusted covariance
+        # using the probabilities and means calculated from previous steps and sample data values.
         for j in range(n_clusters):
             x = data - mu[j]
             cov[j] = np.dot(weights[j] * x.T, x) / np.sum(weights[j])
+
+        # This is calculation for the prior probabilities calculation  is to be used for calculation of probabilities
+        # later in the flow.
         pi = np.sum(weights, axis=1) / n_samples
 
     return mu, cov, pi, log_likelihoods
